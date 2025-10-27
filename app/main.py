@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers.deep_agents import router as deep_agents_router
+from app.routers.deep_agents import router as deep_agents_router
 
 app = FastAPI()
 

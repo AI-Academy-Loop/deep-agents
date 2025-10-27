@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
-from services.deep_agents_service import agent
+from app.services.deep_agents_service import agent
 import uuid
 from langgraph.types import Command
-from schemas import StartRun, ResumePayload
+from app.schemas import StartRun, ResumePayload
 
 router = APIRouter()
 
