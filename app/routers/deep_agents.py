@@ -5,5 +5,5 @@ router = APIRouter()
 
 @router.post("/deep-agents")
 async def get_deep_agents(query: str):
-    response = agent.invoke({"messages": [{"role": "user", "content": query}]})
-    return response
+    response = await agent.ainvoke({"messages": [{"role": "user", "content": query}]})
+    return {"response": response}
