@@ -1,2 +1,5 @@
 fastapi[standard]
 deepagents
+pydantic
+pydantic-settings
+langchain-google-genai
