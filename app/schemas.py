@@ -1,12 +1,17 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Optional
 from pydantic import BaseModel
 
-class StartRun(BaseModel):
-    query: str
+class UserMessage(BaseModel):
+    role: str
+    content: str
+
+class StartExtraction(BaseModel):
+    messages: List[UserMessage]
+    mode: str = "cm"  # "cm" (diagnosis) | "pcs" (procedures)
 
 class Decision(BaseModel):
     type: str  # "approve" | "reject" | "edit"
-    edited_action: Dict[str, Any] | None = None  # Required for "edit"
+    edited: Optional[Dict] = None
 
 class ResumePayload(BaseModel):
     decisions: List[Decision]

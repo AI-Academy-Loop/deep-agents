@@ -1,9 +1,21 @@
 from fastapi import FastAPI
-from app.routers.deep_agents import router as deep_agents_router
+from app.routers.files import router as files_router
+from app.utils.parsing import load_local_files
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Load ICD-10 files into vector stores
+    print("\n🚀 Loading ICD-10 data on startup...")
+    load_local_files()
+    yield
+    # Shutdown: cleanup if needed
+    print("\n👋 Shutting down...")
 
-app.include_router(deep_agents_router)
+app = FastAPI(lifespan=lifespan)
+
+app.include_router(files_router)
+
 
 @app.get("/")
 async def root():

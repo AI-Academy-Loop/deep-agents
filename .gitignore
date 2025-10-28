@@ -49,6 +49,9 @@ coverage.xml
 # Jupyter Notebook
 .ipynb_checkpoints
 
+# ChromaDB persistent storage
+chroma_db/
+
 # pyenv
 .python-version
 
@@ -107,3 +110,6 @@ secrets.yml
 .env.development.local
 .env.test.local
 .env.production.local
+
+labs/
+ICD10/

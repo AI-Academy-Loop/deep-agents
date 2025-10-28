@@ -3,3 +3,15 @@ deepagents
 pydantic
 pydantic-settings
 langchain-google-genai
+langsmith
+langgraph
+langchain-chroma
+langchain-huggingface
+chromadb
+sentence-transformers
+datasets
+pandas
+numpy
+pyarrow
+lxml
+pypdf2
