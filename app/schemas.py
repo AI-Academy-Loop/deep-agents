@@ -7,7 +7,6 @@ class UserMessage(BaseModel):
 
 class StartExtraction(BaseModel):
     messages: List[UserMessage]
-    mode: str = "cm"  # "cm" (diagnosis) | "pcs" (procedures)
 
 class Decision(BaseModel):
     type: str  # "approve" | "reject" | "edit"

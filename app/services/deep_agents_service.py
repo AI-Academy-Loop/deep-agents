@@ -7,33 +7,70 @@ from typing import Optional
 import json
 from langchain_chroma import Chroma
 import app.utils.parsing as parsing
+import os
+
+# Configure LangSmith tracing
+os.environ["LANGCHAIN_TRACING_V2"] = settings.LANGCHAIN_TRACING_V2
+os.environ["LANGCHAIN_API_KEY"] = settings.LANGCHAIN_API_KEY
+os.environ["LANGCHAIN_PROJECT"] = settings.LANGCHAIN_PROJECT
+os.environ["LANGCHAIN_ENDPOINT"] = settings.LANGCHAIN_ENDPOINT
 
 llm = init_chat_model("gemini-2.5-flash", model_provider="google_genai",api_key=settings.GOOGLE_API_KEY)
 
 @tool
 def search_cm_codes(query: str, top_k: int = 5) -> str:
-    """Semantic search CM Index/Tabular for diagnosis."""
+    """Search ICD-10-CM codes for diagnosis. Returns: code, description, chapter/section context, includes/excludes notes. 
+    Example: query='acute asthma attack' returns codes like J45.901 with full details."""
     if not parsing.cm_vectorstore: return "No CM data loaded."
     docs = parsing.cm_vectorstore.similarity_search(query, k=top_k)
-    return json.dumps([{
-        "code": d.metadata.get('code', 'N/A'),
-        "snippet": d.page_content[:200],
-        "source": d.metadata.get('source')
-    } for d in docs], indent=2)
+    results = []
+    for d in docs:
+        # Extract code and description from content
+        content_lines = d.page_content.split('\n')
+        code = d.metadata.get('code', 'N/A')
+        desc = d.metadata.get('description', '')
+        if not desc and len(content_lines) > 1:
+            # Try to extract from content
+            for line in content_lines:
+                if line.startswith('Description:'):
+                    desc = line.replace('Description:', '').strip()
+                    break
+        
+        results.append({
+            "code": code,
+            "description": desc,
+            "details": d.page_content[:300],
+            "source": d.metadata.get('source'),
+            "type": d.metadata.get('type')
+        })
+    return json.dumps(results, indent=2)
 
 @tool
 def extract_cm_guidelines(query: str, top_k: int = 3) -> str:
-    """Extract guidelines matching query."""
+    """Extract ICD-10-CM coding guidelines and instructions. Returns: official guidelines, coding rules, chapter-specific instructions.
+    Example: query='diabetes' returns guidelines for diabetes coding sequencing."""
     if not parsing.cm_vectorstore: return "No guidelines."
     docs = parsing.cm_vectorstore.similarity_search(query, k=top_k, filter={"type": "guidelines"})
-    return '\n'.join([d.page_content for d in docs])
+    if not docs:
+        # Fallback: search without filter if no guidelines found
+        docs = parsing.cm_vectorstore.similarity_search(query, k=top_k)
+    return '\n\n---\n\n'.join([d.page_content for d in docs])
 
 @tool
 def search_pcs_codes(query: str, top_k: int = 5) -> str:
-    """Search PCS procedures."""
+    """Search ICD-10-PCS procedure codes. Returns: procedure tables, code definitions, approach/device options.
+    Example: query='knee replacement' returns relevant PCS tables with code combinations."""
     if not parsing.pcs_vectorstore: return "No PCS data."
     docs = parsing.pcs_vectorstore.similarity_search(query, k=top_k)
-    return json.dumps([{"snippet": d.page_content[:200], "source": d.metadata['source']} for d in docs])
+    results = []
+    for d in docs:
+        results.append({
+            "table_code": d.metadata.get('table_code', ''),
+            "details": d.page_content[:300],
+            "source": d.metadata.get('source'),
+            "type": d.metadata.get('type')
+        })
+    return json.dumps(results, indent=2)
 
 @tool
 def hybrid_search(query: str) -> str:

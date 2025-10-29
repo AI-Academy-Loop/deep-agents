@@ -49,7 +49,46 @@ def extract(payload: StartExtraction):
     
     if result.get("__interrupt__"):
         interrupts = result["__interrupt__"][0].value
-        return {"status": "interrupted", "suggestions": interrupts["action_requests"], "thread_id": thread_id}
+        action_requests = interrupts["action_requests"]
+        
+        # Enhance suggestions with preview data
+        enhanced_suggestions = []
+        for action in action_requests:
+            tool_name = action.get("name")
+            args = action.get("args", {})
+            
+            # Get preview of what the tool would return
+            preview = ""
+            if tool_name == "search_cm_codes":
+                from app.services.deep_agents_service import search_cm_codes
+                preview_result = search_cm_codes.invoke(args)
+                import json
+                try:
+                    codes_data = json.loads(preview_result)
+                    preview = "Found codes: " + ", ".join([f"{c.get('code', 'N/A')} - {c.get('description', 'N/A')[:50]}" for c in codes_data[:3]])
+                except:
+                    preview = preview_result[:200]
+            elif tool_name == "extract_cm_guidelines":
+                from app.services.deep_agents_service import extract_cm_guidelines
+                preview_result = extract_cm_guidelines.invoke(args)
+                preview = preview_result[:200] + "..." if len(preview_result) > 200 else preview_result
+            elif tool_name == "search_pcs_codes":
+                from app.services.deep_agents_service import search_pcs_codes
+                preview_result = search_pcs_codes.invoke(args)
+                import json
+                try:
+                    pcs_data = json.loads(preview_result)
+                    preview = "Found procedures: " + ", ".join([f"{p.get('table_code', 'N/A')}" for p in pcs_data[:3]])
+                except:
+                    preview = preview_result[:200]
+            
+            enhanced_suggestions.append({
+                "name": tool_name,
+                "args": args,
+                "description": f"Tool: {tool_name}\nQuery: {args.get('query', 'N/A')}\n\nPreview:\n{preview}"
+            })
+        
+        return {"status": "interrupted", "suggestions": enhanced_suggestions, "thread_id": thread_id}
     else:
         last_msg = result["messages"][-1]
         return {"status": "finished", "output": last_msg.content}
