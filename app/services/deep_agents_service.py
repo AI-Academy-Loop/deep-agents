@@ -5,7 +5,6 @@ from langchain_core.tools import tool
 from app.config import settings
 from typing import Optional
 import json
-from langchain_chroma import Chroma
 import app.utils.parsing as parsing
 import os
 
@@ -108,11 +107,11 @@ Interrupt for HITL on suggestions."""
 agent = create_deep_agent(
     model=llm,
     tools=[search_cm_codes, extract_cm_guidelines, search_pcs_codes, hybrid_search, get_stats],
-    interrupt_on={
-        "search_cm_codes": True,
-        "extract_cm_guidelines": True,
-        "search_pcs_codes": True
-    },
+    #interrupt_on={
+    #    "search_cm_codes": True,
+    #    "extract_cm_guidelines": True,
+    #    "search_pcs_codes": True
+    #},
     checkpointer=checkpointer,
     system_prompt=system_prompt
 )
