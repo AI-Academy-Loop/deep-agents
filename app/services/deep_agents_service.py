@@ -10,10 +10,10 @@ import app.utils.parsing as parsing
 import os
 
 # Configure LangSmith tracing
-os.environ["LANGCHAIN_TRACING_V2"] = settings.LANGCHAIN_TRACING_V2
-os.environ["LANGCHAIN_API_KEY"] = settings.LANGCHAIN_API_KEY
-os.environ["LANGCHAIN_PROJECT"] = settings.LANGCHAIN_PROJECT
-os.environ["LANGCHAIN_ENDPOINT"] = settings.LANGCHAIN_ENDPOINT
+os.environ["LANGSMITH_TRACING_V2"] = settings.LANGSMITH_TRACING_V2
+os.environ["LANGSMITH_API_KEY"] = settings.LANGSMITH_API_KEY
+os.environ["LANGSMITH_PROJECT"] = settings.LANGSMITH_PROJECT
+os.environ["LANGSMITH_ENDPOINT"] = settings.LANGSMITH_ENDPOINT
 
 llm = init_chat_model("gemini-2.5-flash", model_provider="google_genai",api_key=settings.GOOGLE_API_KEY)
 

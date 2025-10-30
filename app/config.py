@@ -55,10 +55,10 @@ class Settings(BaseSettings):
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY")
     
     # LangSmith Tracing
-    LANGCHAIN_TRACING_V2: str = os.getenv("LANGCHAIN_TRACING_V2", "true")
-    LANGCHAIN_API_KEY: Optional[str] = os.getenv("LANGCHAIN_API_KEY")
-    LANGCHAIN_PROJECT: str = os.getenv("LANGCHAIN_PROJECT", "deep-agents-medical-rag")
-    LANGCHAIN_ENDPOINT: str = os.getenv("LANGCHAIN_ENDPOINT", "https://api.smith.langchain.com")
+    LANGSMITH_TRACING_V2: str = os.getenv("LANGSMITH_TRACING_V2", "true")
+    LANGSMITH_API_KEY: Optional[str] = os.getenv("LANGSMITH_API_KEY")
+    LANGSMITH_PROJECT: str = os.getenv("LANGSMITH_PROJECT", "deep-agents-medical-rag")
+    LANGSMITH_ENDPOINT: str = os.getenv("LANGSMITH_ENDPOINT", "https://api.smith.langchain.com")
     
     class Config:
         env_file = ".env"
