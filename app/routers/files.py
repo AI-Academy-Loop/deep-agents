@@ -1,7 +1,7 @@
 from fastapi import APIRouter, File, UploadFile
 import os
 from typing import List
-from app.utils.parsing import load_local_files, DATA_DIR, CHROMA_PERSIST_DIR
+from app.utils.parsing import load_local_files, DATA_DIR, FAISS_PERSIST_DIR
 from app.schemas import ResumePayload, StartExtraction
 import uuid
 from app.services.deep_agents_service import agent, get_config
@@ -21,9 +21,9 @@ async def load_files():
 async def rebuild_stores():
     """Force rebuild of vector stores from source files (deletes cache)"""
     # Delete existing persistent stores
-    if os.path.exists(CHROMA_PERSIST_DIR):
-        shutil.rmtree(CHROMA_PERSIST_DIR)
-        print(f"🗑️  Deleted existing vector stores at {CHROMA_PERSIST_DIR}")
+    if os.path.exists(FAISS_PERSIST_DIR):
+        shutil.rmtree(FAISS_PERSIST_DIR)
+        print(f"🗑️  Deleted existing vector stores at {FAISS_PERSIST_DIR}")
     
     # Rebuild from source
     load_local_files()
@@ -90,8 +90,8 @@ def extract(payload: StartExtraction):
         
         return {"status": "interrupted", "suggestions": enhanced_suggestions, "thread_id": thread_id}
     else:
-        last_msg = result["messages"][-1]
-        return {"status": "finished", "output": last_msg.content}
+        last_msg = result["messages"]
+        return {"status": "finished", "output": last_msg}
     
 @router.post("/resume/{thread_id}")
 def resume(thread_id: str, payload: ResumePayload):
