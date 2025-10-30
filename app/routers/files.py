@@ -90,8 +90,8 @@ def extract(payload: StartExtraction):
         
         return {"status": "interrupted", "suggestions": enhanced_suggestions, "thread_id": thread_id}
     else:
-        last_msg = result["messages"][-1]
-        return {"status": "finished", "output": last_msg.content}
+        last_msg = result["messages"]
+        return {"status": "finished", "output": last_msg}
     
 @router.post("/resume/{thread_id}")
 def resume(thread_id: str, payload: ResumePayload):
