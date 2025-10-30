@@ -1,13 +1,13 @@
 from typing import List, Dict, Any
 import os
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_chroma import Chroma
+from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from PyPDF2 import PdfReader
 import xmlschema
 
 DATA_DIR = "ICD10"
-CHROMA_PERSIST_DIR = "./chroma_db"  # Directory to persist vector stores
+FAISS_PERSIST_DIR = "./faiss_db"  # Directory to persist vector stores
 
 # Global vector stores - will be populated by load_local_files()
 cm_vectorstore = None
@@ -712,6 +712,9 @@ def parse_pdf_file(file_path: str, doc_type: str) -> List[Document]:
     return docs
 
 
+def faiss_store_exists(path):
+    return os.path.exists(os.path.join(path, "index.faiss")) and os.path.exists(os.path.join(path, "index.pkl"))
+
 def load_local_files():
     """Load ICD-10 files from DATA_DIR or use existing persistent vector stores"""
     print("\n" + "="*60)
@@ -724,28 +727,20 @@ def load_local_files():
     print("✅ Embeddings model loaded")
     
     # Check if persistent vector stores already exist
-    cm_persist_path = os.path.join(CHROMA_PERSIST_DIR, "icd10cm")
-    pcs_persist_path = os.path.join(CHROMA_PERSIST_DIR, "icd10pcs")
+    cm_persist_path = os.path.join(FAISS_PERSIST_DIR, "icd10cm")
+    pcs_persist_path = os.path.join(FAISS_PERSIST_DIR, "icd10pcs")
     
-    if os.path.exists(cm_persist_path) and os.path.exists(pcs_persist_path):
-        print("\n📦 Found existing vector stores on disk - loading from persistence...")
+    if faiss_store_exists(cm_persist_path) and faiss_store_exists(pcs_persist_path):
+        print("\n📦 Found existing FAISS vector stores on disk - loading from persistence...")
         try:
-            cm_vectorstore = Chroma(
-                collection_name="icd10cm",
-                embedding_function=embeddings,
-                persist_directory=cm_persist_path
-            )
-            pcs_vectorstore = Chroma(
-                collection_name="icd10pcs",
-                embedding_function=embeddings,
-                persist_directory=pcs_persist_path
-            )
-            cm_count = cm_vectorstore._collection.count()
-            pcs_count = pcs_vectorstore._collection.count()
+            cm_vectorstore = FAISS.load_local(cm_persist_path, embeddings, allow_dangerous_deserialization=True)
+            pcs_vectorstore = FAISS.load_local(pcs_persist_path, embeddings, allow_dangerous_deserialization=True)
+            cm_count = len(cm_vectorstore.docstore._dict)
+            pcs_count = len(pcs_vectorstore.docstore._dict)
             print(f"  ✅ Loaded CM vector store: {cm_count} documents")
             print(f"  ✅ Loaded PCS vector store: {pcs_count} documents")
             print("\n" + "="*60)
-            print("🎉 Vector Stores Loaded from Disk!")
+            print("🎉 FAISS Vector Stores Loaded from Disk!")
             print("="*60 + "\n")
             return
         except Exception as e:
@@ -784,33 +779,25 @@ def load_local_files():
                 pcs_docs.extend(parse_pdf_file(path, cat))
     
     print("\n" + "-"*60)
-    print("💾 Creating persistent vector stores in ChromaDB...")
+    print("💾 Creating persistent vector stores em FAISS...")
     
     # Create persist directory if it doesn't exist
-    os.makedirs(CHROMA_PERSIST_DIR, exist_ok=True)
+    os.makedirs(FAISS_PERSIST_DIR, exist_ok=True)
     
     if cm_docs:
-        print(f"  🔄 Building CM vector store with {len(cm_docs)} documents...")
-        cm_vectorstore = Chroma.from_documents(
-            cm_docs, 
-            embeddings, 
-            collection_name="icd10cm",
-            persist_directory=cm_persist_path
-        )
-        print(f"  ✅ Loaded {len(cm_docs)} CM chunks into Chroma")
+        print(f"  🔄 Building CM vector store com {len(cm_docs)} documents...")
+        cm_vectorstore = FAISS.from_documents(cm_docs, embeddings)
+        cm_vectorstore.save_local(cm_persist_path)
+        print(f"  ✅ Loaded {len(cm_docs)} CM chunks into FAISS")
         print(f"  💾 Persisted to: {cm_persist_path}")
     else:
         print("  ⚠️  No CM documents found")
-    
+
     if pcs_docs:
-        print(f"  🔄 Building PCS vector store with {len(pcs_docs)} documents...")
-        pcs_vectorstore = Chroma.from_documents(
-            pcs_docs, 
-            embeddings, 
-            collection_name="icd10pcs",
-            persist_directory=pcs_persist_path
-        )
-        print(f"  ✅ Loaded {len(pcs_docs)} PCS chunks into Chroma")
+        print(f"  🔄 Building PCS vector store com {len(pcs_docs)} documents...")
+        pcs_vectorstore = FAISS.from_documents(pcs_docs, embeddings)
+        pcs_vectorstore.save_local(pcs_persist_path)
+        print(f"  ✅ Loaded {len(pcs_docs)} PCS chunks into FAISS")
         print(f"  💾 Persisted to: {pcs_persist_path}")
     else:
         print("  ⚠️  No PCS documents found")
