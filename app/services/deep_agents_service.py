@@ -5,7 +5,6 @@ from langchain_core.tools import tool
 from app.config import settings
 from typing import Optional
 import json
-from langchain_chroma import Chroma
 import app.utils.parsing as parsing
 import os
 
