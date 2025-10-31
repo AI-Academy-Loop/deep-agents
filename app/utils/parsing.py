@@ -688,27 +688,26 @@ def parse_xml_file(file_path: str, doc_type: str) -> List[Document]:
         return []
 
 def parse_pdf_file(file_path: str, doc_type: str) -> List[Document]:
-    """Parse any PDF file by extracting text from each page"""
+    """Parse any PDF file by extracting text from each page and chunking by topics."""
     print(f"  📄 Parsing PDF: {os.path.basename(file_path)}")
     reader = PdfReader(file_path)
     docs = []
     for i, page in enumerate(reader.pages):
         text = page.extract_text()
         if text and len(text.strip()) > 100:
-            # Split into chunks of approximately 1000 characters
-            chunks = [text[j:j+1000] for j in range(0, len(text), 1000)]
-            for chunk_idx, chunk in enumerate(chunks):
-                if len(chunk.strip()) > 100:
-                    docs.append(Document(
-                        page_content=chunk.strip(),
-                        metadata={
-                            'page': i+1,
-                            'chunk': chunk_idx,
-                            'type': doc_type,
-                            'source': os.path.basename(file_path)
-                        }
-                    ))
-    print(f"    ✅ Extracted {len(docs)} chunks from {len(reader.pages)} pages")
+            # Split text into topics based on headings or significant breaks
+            topics = [topic.strip() for topic in text.split('\n') if len(topic.strip()) > 100]
+            for topic_idx, topic in enumerate(topics):
+                docs.append(Document(
+                    page_content=topic,
+                    metadata={
+                        'page': i + 1,
+                        'topic': topic_idx,
+                        'type': doc_type,
+                        'source': os.path.basename(file_path)
+                    }
+                ))
+    print(f"    ✅ Extracted {len(docs)} topics from {len(reader.pages)} pages")
     return docs
 
 
