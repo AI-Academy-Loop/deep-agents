@@ -54,6 +54,12 @@ class Settings(BaseSettings):
     # AI API Keys
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY")
     
+    # LangSmith Tracing
+    LANGSMITH_TRACING_V2: str = os.getenv("LANGSMITH_TRACING_V2", "true")
+    LANGSMITH_API_KEY: Optional[str] = os.getenv("LANGSMITH_API_KEY")
+    LANGSMITH_PROJECT: str = os.getenv("LANGSMITH_PROJECT", "deep-agents-medical-rag")
+    LANGSMITH_ENDPOINT: str = os.getenv("LANGSMITH_ENDPOINT", "https://api.smith.langchain.com")
+    
     class Config:
         env_file = ".env"
         case_sensitive = True
